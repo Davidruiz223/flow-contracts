@@ -1,0 +1,118 @@
+const flow = artifacts.require("FLOW");
+const truffleAssert = require('truffle-assertions');
+
+//Make these functions public in FLOW.sol to run the tests.
+
+contract("FLOW", async accounts => {
+    before(async () => {
+        this.contract = await flow.new();
+    });
+    it("compounds correctly", async () => {
+        let result = await this.contract._compound('10000000000000000', '184467440737095516', 29);
+        assert.equal(result.toString(), '13345038765672333');
+        result = await this.contract._compound('10000000000000000', '184467440737095516', 59);
+        assert.equal(result.toString(), '17987096025387032');
+        result = await this.contract._compound('10000000000000000', '184467440737095516', 60);
+        assert.equal(result.toString(), '18166966985640902');
+    });
+    it("calculates the cycle correctly", async () => {
+        await truffleAssert.fails(this.contract._getCycle(Math.floor(Date.now() / 1000) + 1, Math.floor(Date.now() / 1000)));
+        cycle = await this.contract._getCycle(Math.floor(Date.now() / 1000), (Math.floor(Date.now() / 1000)) + (86399));
+        assert.equal(cycle, 1);
+        cycle = await this.contract._getCycle(Math.floor(Date.now() / 1000), (Math.floor(Date.now() / 1000)) + (86400));
+        assert.equal(cycle, 2);
+        cycle = await this.contract._getCycle(Math.floor(Date.now() / 1000), (Math.floor(Date.now() / 1000)) + ((86400 * 76) -1));
+        assert.equal(cycle, 76);
+        cycle = await this.contract._getCycle(Math.floor(Date.now() / 1000), (Math.floor(Date.now() / 1000)) + ((86400 * 730 * 1000)));
+        assert.equal(cycle, 3711);
+    });
+    it("gets correct number of elapsed seconds", async () => {
+        let secondsElapsed = await this.contract._getElapsedSeconds(Math.floor(Date.now() / 1000), Math.floor(Date.now() / 1000));
+        assert.equal(secondsElapsed, 0);
+        await truffleAssert.fails(this.contract._getElapsedSeconds(Math.floor(Date.now() / 1000) + 1, Math.floor(Date.now() / 1000)));
+        secondsElapsed = await this.contract._getElapsedSeconds(Math.floor(Date.now() / 1000), Math.floor(Date.now() / 1000) + 86399);
+        assert.equal(secondsElapsed, 86399);
+        secondsElapsed = await this.contract._getElapsedSeconds(Math.floor(Date.now() / 1000), Math.floor(Date.now() / 1000) + 1039477879);
+        assert.equal(secondsElapsed, 1039477879);
+    });
+    it("gets the correct supply", async () => {
+        let initialSupply = '10000000000000000';
+        let result = await this.contract._getSupply(initialSupply, 30);
+        assert.equal(result.toString(), '13345038765672333');
+        result = await this.contract._getSupply(initialSupply, 61);
+        assert.equal(result.toString(), '18166966985640902');
+        result = await this.contract._getSupply(initialSupply, 710);
+        assert.equal(result.toString(), '227960318493478340');
+        result = await this.contract._getSupply(initialSupply, 1601);
+        assert.equal(result.toString(), '567042232196866048');
+        result = await this.contract._getSupply(initialSupply, 2980);
+        assert.equal(result.toString(), '684878979088717823');
+        result = await this.contract._getSupply(initialSupply, 2981);
+        assert.equal(result.toString(), '684905732173838476');
+        result = await this.contract._getSupply(initialSupply, 2982);
+        assert.equal(result.toString(), '684919109238919996');
+        result = await this.contract._getSupply(initialSupply, 3710);
+        assert.equal(result.toString(), '692262153422464548');
+        result = await this.contract._getSupply(initialSupply, 3711);
+        assert.equal(result.toString(), '692268913795056564');
+        result = await this.contract._getSupply(initialSupply, 10000000);
+        assert.equal(result.toString(), '692268913795056564');
+    });
+    it("loads eras correctly", async () => {
+        let era = await this.contract._eras(0);
+        assert.equal(era.startCycle, 1);
+        assert.equal(era.endCycle, 60);
+        assert.equal(era.cycleInflation.toString(), '184467440737095516');
+        assert.equal(era.finalSupply.toString(), '18166966985640902');
+        era = await this.contract._eras(1);
+        assert.equal(era.startCycle, 61);
+        assert.equal(era.endCycle, 425);
+        assert.equal(era.cycleInflation.toString(), '92233720368547758');
+        assert.equal(era.finalSupply.toString(), '112174713264391144');
+        era = await this.contract._eras(2);
+        assert.equal(era.startCycle, 426);
+        assert.equal(era.endCycle, 790);
+        assert.equal(era.cycleInflation.toString(), '46116860184273879');
+        assert.equal(era.finalSupply.toString(), '279057783081840914');
+        era = await this.contract._eras(3);
+        assert.equal(era.startCycle, 791);
+        assert.equal(era.endCycle, 1155);
+        assert.equal(era.cycleInflation.toString(), '23058430092136939');
+        assert.equal(era.finalSupply.toString(), '440268139544969912');
+        era = await this.contract._eras(4);
+        assert.equal(era.startCycle, 1156);
+        assert.equal(era.endCycle.toString(), 1520);
+        assert.equal(era.cycleInflation.toString(), '11529215046068469');
+        assert.equal(era.finalSupply.toString(), '553044069474490613');
+        era = await this.contract._eras(5);
+        assert.equal(era.startCycle, 1521);
+        assert.equal(era.endCycle, 1885);
+        assert.equal(era.cycleInflation.toString(), '5764607523034234');
+        assert.equal(era.finalSupply.toString(), '619853011328525904');
+        era = await this.contract._eras(6);
+        assert.equal(era.startCycle, 1886);
+        assert.equal(era.endCycle, 2250);
+        assert.equal(era.cycleInflation.toString(), '2882303761517117');
+        assert.equal(era.finalSupply.toString(), '656228575376038043');
+        era = await this.contract._eras(7);
+        assert.equal(era.startCycle, 2251);
+        assert.equal(era.endCycle, 2615);
+        assert.equal(era.cycleInflation.toString(), '1441151880758558');
+        assert.equal(era.finalSupply.toString(), '675209948612919169');
+        era = await this.contract._eras(8);
+        assert.equal(era.startCycle, 2616);
+        assert.equal(era.endCycle, 2980);
+        assert.equal(era.cycleInflation.toString(), '720575940379279');
+        assert.equal(era.finalSupply.toString(), '684905732173838476');
+        era = await this.contract._eras(9);
+        assert.equal(era.startCycle, 2981);
+        assert.equal(era.endCycle, 3345);
+        assert.equal(era.cycleInflation.toString(), '360287970189639');
+        assert.equal(era.finalSupply.toString(), '689805758238227141');
+        era = await this.contract._eras(10);
+        assert.equal(era.startCycle, 3346);
+        assert.equal(era.endCycle, 3710);
+        assert.equal(era.cycleInflation.toString(), '180143985094819');
+        assert.equal(era.finalSupply.toString(), '692268913795056564');
+    });
+});

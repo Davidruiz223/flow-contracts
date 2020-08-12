@@ -1,0 +1,21 @@
+{
+  "name": "flow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "openzeppelin-solidity": "^3.1.0",
+    "regenerator-runtime": "^0.13.7",
+    "solc": "^0.6.2",
+    "truffle-assertions": "^0.9.2",
+    "truffle-ledger-provider": "^1.0.1"
+  }
+}
